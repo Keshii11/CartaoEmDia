@@ -68,5 +68,3 @@ The code requires the following Python packages to be installed:
 
 - HTML templates are located in the `templates` directory, and CSS styles are defined in the `static` directory.
 
-#### Video Demo
- https://youtu.be/RXZqVWYOws4
