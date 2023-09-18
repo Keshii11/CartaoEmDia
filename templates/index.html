@@ -1,0 +1,177 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    CartãoEmDia
+{% endblock %}
+
+{% block body %}
+    <!-- Adiconar os items-->
+    <form action="/add_invoice" method="post">
+        <div class="row">
+            <div class="col-auto my-3">
+                <label class="mr-2 lead" for="invoice">Qual o dia do vencimento da sua fatura?</label>
+                <select class="custom-select mr-sm-auto" id="invoice" name="invoice">
+                    <option disabled selected>{% if invoice != -1 %} {{ invoice }} {% else %} Dia {% endif %}</option>
+                    {% for day in range(1, 31) %}
+                        <option value="{{ day }}">{{ "{:02}".format(day) }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-sm-auto">
+                <button class="btn btn-primary btn-sm my-3" type="submit">OK</button>
+            </div>
+        </div>
+    </form>
+    {% if invoice != -1 %}
+        <form action="/add_items" method="post">
+            <div class="row">
+                <div class="col">
+                    <input type="date" class="form-control" name="date" placeholder="Data">
+                </div>
+                <div class="col">
+                    <input type="text" class="form-control" name="name" placeholder="Nome">
+                </div>
+                <div class="col">
+                    <div class="reais-container">
+                        <span id="reais">R$</span>
+                        <input type="number" class="form-control" id="value" name="value" placeholder="Valor" min="0.01" step="0.01">
+                    </div>
+                </div>
+                <div class="col">
+                    <input type="number" class="form-control" name="installments" placeholder="Parcelas" min="1">
+                </div>
+                <div class="col-sm-auto">
+                    <button class="btn btn-primary" type="submit">Adicionar</button>
+                </div>
+            </div>
+        </form>
+
+        <!-- Mostrar os itens da fatura -->
+        <div class="container-fluid my-5">
+            <table class="table table-striped table-hover">
+                <p class="display-6">{{ first }} - {{ last }}</p>
+                <thead>
+                    <tr>
+                        <th class="text-center col-1">#</th>
+                        <th class="text-center col-2">Dia</th>
+                        <th class="text-center col-2">Nome</th>
+                        <th class="text-center col-2">Valor</th>
+                        <th class="text-center col-2">Parcelas</th>
+                        <th class="text-center col-2">Valor da parcela</th>
+                        <th class="text-center col-1"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in expenses %}
+                        <tr>
+                            <td></td>
+                            <td>{{ row.date_format }}</td>
+                            <td>{{ row.name }}</td>
+                            <td>{{ "R$%.2f" | format(row.total) | replace('.', ',') }}</td>
+                            <td>{{ row.installments_format }}</td>
+                            <td>{{ "R$%.2f" | format(row.value) | replace('.', ',') }}</td>
+                            <td>
+                                <div class="d-flex justify-content-center">
+                                <form action="/edit" method="post">
+                                    <!-- Modal button -->
+                                    <button type="button" class="btn btn-primary btn-sm me-2" data-bs-toggle="modal" data-bs-target="#modal_edit_{{ row.id }}">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pencil-square" viewBox="0 0 16 16">
+                                        <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"/>
+                                        <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5v11z"/>
+                                        </svg>
+                                    </button>
+                                    <!-- Modal edit -->
+                                    <div class="modal fade" id="modal_edit_{{ row.id }}" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+                                        <div class="modal-dialog modal-xl">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h1 class="modal-title fs-5" id="staticBackdropLabel">Editar Item</h1>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <div class="row">
+                                                        <div class="col">
+                                                            <input type="date" class="form-control" name="date" placeholder="Data" value="{{ row.date }}">
+                                                        </div>
+                                                        <div class="col">
+                                                            <input type="text" class="form-control" name="name" placeholder="Nome" value="{{ row.name }}">
+                                                        </div>
+                                                        <div class="col">
+                                                            <div class="reais-container">
+                                                                <span id="reais">R$</span>
+                                                                <input type="number" class="form-control" id="value" name="value" placeholder="Valor" min="0.01" step="0.01" value="{{ row.total }}">
+                                                            </div>
+                                                        </div>
+                                                        <div class="col">
+                                                            <input type="number" class="form-control" name="installments" placeholder="Parcelas" min="1" value="{{ row.installments }}">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                                    <button type="submit" class="btn btn-primary">Editar</button>
+                                                </div>
+                                                <input type="hidden" name="id" value="{{ row.id }}">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </form>
+                                <form action="/remove" method="post">
+                                    <!-- Modal button -->
+                                    <button type="button" class="btn btn-danger btn-sm me-2" data-bs-toggle="modal" data-bs-target="#modal_remove_{{ row.id }}">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
+                                        <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5Zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5Zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6Z"/>
+                                        <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1ZM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118ZM2.5 3h11V2h-11v1Z"/>
+                                        </svg>
+                                    </button>
+                                    <!-- Modal remove -->
+                                    <div class="modal fade" id="modal_remove_{{ row.id }}" tabindex="-1" aria-labelledby="ModalLabel" aria-hidden="true">
+                                        <div class="modal-dialog modal-dialog-centered">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h1 class="modal-title fs-5" id="ModalLabel">Confirmação de Exclusão</h1>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                </div>
+                                                <div class="modal-body text-center">
+                                                    Tem certeza de que deseja excluir este item?
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                                    <button type="submit" class="btn btn-danger">Remover</button>
+                                                </div>
+                                                <input type="hidden" name="id" value="{{ row.id }}">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </form>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td class="border-0 fw-bold text-end" colspan="5">TOTAL</td>
+                        <td class="border-0 text-center">{{ "R$%.2f" | format(sum_value) | replace('.', ',') }}</td>
+                    </tr>
+                </tfoot>
+            </table>
+            <nav>
+                <ul class="pagination justify-content-center">
+                <li class="page-item"><a class="page-link" href="/previous/{{ year }}-{{ month }}-{{ invoice }}">Anterior</a></li>
+                <li class="page-item"><a class="page-link" href="/">1</a></li>
+                <li class="page-item"><a class="page-link" href="/next/{{ year }}-{{ month }}-{{ invoice }}">Próximo</a></li>
+                </ul>
+            </nav>
+        </div>
+
+    {% endif %}
+
+    <script>
+        // Add number rows
+        const numberRows = document.querySelectorAll('tbody tr td:first-child');
+        numberRows.forEach((row, index) => {
+          row.textContent = index + 1;
+        });
+      </script>
+{% endblock %}
